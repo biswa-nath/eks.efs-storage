@@ -68,7 +68,7 @@ deploy_manifests() {
 destroy_infrastructure() {    
     # Delete Kubernetes manifests first
     print_status "Deleting Kubernetes manifests..."
-    kubectl delete -f manifests/
+    kubectl delete -f manifests/ --ignore-not-found
     
     print_success "Kubernetes manifests deleted"
     
@@ -80,8 +80,12 @@ destroy_infrastructure() {
     cd terraform
     
     print_status "Destroying Terraform infrastructure for EFS..."
-    terraform destroy -auto-approve
-    
+
+    efs_id=$(terraform output -raw efs_id 2>/dev/null)
+    if [ -n "$efs_id" ]; then
+        terraform destroy -auto-approve || true
+    fi
+
     print_success "Infrastructure for EFS destruction completed"
     
     # Return to original directory
